@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Absensi Jama'ah SMK Negeri 1 Sangasanga</title>
+    <title>Dashboard - Sistem Absensi Digital YAYASAN NURUL HUDA KAPEDI</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -25,13 +25,28 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="logo-container-sidebar">
-                <img src="assets/img/logo-smk.png" alt="Logo SMK N 1 Sangasanga" class="sidebar-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="logo-fallback" style="display: none;">
-                    <i class="bi bi-building"></i>
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-container-sidebar">
+                    <img src="assets/img/logo-yayasan.png" alt="Logo" class="sidebar-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback" style="display: none;">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+                <div class="sidebar-title text-start text-white">
+                    <h5 class="mb-0 fw-bold fs-6">E-ABSENSI</h5>
+                    <small class="opacity-75" style="font-size: 10px;">YAYASAN NURUL HUDA</small>
                 </div>
             </div>
-            <h5>Absensi SMK Negeri 1 Sangasanga</h5>
+            
+            <div class="sidebar-user-card mt-4">
+                <div class="user-avatar" id="adminAvatar">
+                    <div class="avatar-text">A</div>
+                </div>
+                <div class="user-details text-start">
+                    <h6 class="mb-0 text-white fw-bold" id="adminName">Admin</h6>
+                    <small class="text-white opacity-75 fw-semibold" style="font-size: 10px;" id="adminRole">ADMIN</small>
+                </div>
+            </div>
         </div>
         
         <ul class="sidebar-menu">
@@ -100,173 +115,180 @@
                 <button class="btn-toggle-sidebar" id="toggleSidebar">
                     <i class="bi bi-list"></i>
                 </button>
-                <div class="header-title">
-                    <h4 id="schoolName">Sekolah Menengah Pertama</h4>
-                    <p class="text-muted mb-0" id="currentDate">Loading...</p>
+                <div class="header-title d-flex align-items-center gap-2">
+                    <h4 class="mb-0 fw-bold">Dashboard</h4>
                 </div>
             </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <div class="user-details">
-                        <h6 class="mb-0" id="adminName">Admin</h6>
-                        <small class="text-muted" id="adminRole">Super Admin</small>
-                    </div>
-                    <div class="user-avatar" id="adminAvatar">
-                        <img src="assets/img/default-avatar.png" alt="Admin" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="avatar-placeholder">
-                            <i class="bi bi-person-circle"></i>
-                        </div>
-                    </div>
+            <div class="header-right d-flex align-items-center gap-3">
+                <div class="header-date text-muted text-uppercase" style="font-size: 12px; font-weight: 600;">
+                    <span class="d-block text-end" style="font-size: 10px; opacity: 0.7;">HARI INI</span>
+                    <span id="currentDate">Sabtu, 8 Agustus 2026</span>
                 </div>
+                <button class="btn btn-light rounded-circle position-relative p-2" style="border: none; background: #F8FAFC;">
+                    <i class="bi bi-bell text-muted"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                        <span class="visually-hidden">New alerts</span>
+                    </span>
+                </button>
             </div>
         </header>
 
-        <!-- Welcome Banner -->
-        <div class="welcome-banner">
-            <div class="banner-content">
-                <div class="banner-text">
-                    <p class="banner-date" id="bannerDate">Loading...</p>
-                    <h2 class="banner-title">Selamat Datang Kembali, <span id="welcomeName">Admin</span>!</h2>
-                    <p class="banner-subtitle">Selalu pantau kehadiran jamaah secara real-time</p>
-                </div>
-                <div class="banner-illustration">
-                    <i class="bi bi-clipboard-check-fill"></i>
-                </div>
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div></div>
+            <button class="btn btn-success btn-sm px-3" onclick="location.reload()" style="background-color: #10B981; border:none; border-radius: 8px;">
+                <i class="bi bi-arrow-clockwise"></i> Refresh Data
+            </button>
         </div>
 
         <!-- Statistics Cards -->
-        <div class="row g-4 mb-4">
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-card stat-card-primary">
-                    <div class="stat-icon">
-                        <i class="bi bi-people-fill"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3 id="totalStudents">0</h3>
-                        <p>Total Siswa</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-card stat-card-success">
-                    <div class="stat-icon">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3 id="totalPresent">0</h3>
-                        <p>Hadir Hari Ini</p>
+        <div class="row g-3 mb-4">
+            <div class="col">
+                <div class="card premium-card border-0 h-100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px; z-index: 2;">TOTAL SISWA</h6>
+                            <div class="icon-box" style="background: rgba(30, 58, 138, 0.1); color: var(--primary); padding: 5px 8px; border-radius: 6px; z-index: 2;">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                        </div>
+                        <h2 class="mb-0 fw-bold" id="totalStudents" style="color: #1E293B; z-index: 2;">0</h2>
+                        <!-- decorative background element -->
+                        <div style="position: absolute; right: -20px; top: -20px; width: 80px; height: 80px; background: rgba(30,58,138,0.03); border-radius: 50%; z-index: 1;"></div>
                     </div>
                 </div>
             </div>
             
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-card stat-card-warning">
-                    <div class="stat-icon">
-                        <i class="bi bi-clock-fill"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3 id="totalLate">0</h3>
-                        <p>Terlambat</p>
+            <div class="col">
+                <div class="card premium-card border-0 h-100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px; z-index: 2;">HADIR</h6>
+                            <div class="icon-box" style="background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 5px 8px; border-radius: 6px; z-index: 2;">
+                                <i class="bi bi-check-lg"></i>
+                            </div>
+                        </div>
+                        <h2 class="mb-0 fw-bold" id="totalPresent" style="color: #1E293B; z-index: 2;">0</h2>
+                        <div style="position: absolute; right: -20px; top: -20px; width: 80px; height: 80px; background: rgba(16,185,129,0.03); border-radius: 50%; z-index: 1;"></div>
                     </div>
                 </div>
             </div>
             
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-card stat-card-danger">
-                    <div class="stat-icon">
-                        <i class="bi bi-x-circle-fill"></i>
+            <div class="col">
+                <div class="card premium-card border-0 h-100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px; z-index: 2;">SAKIT</h6>
+                            <div class="icon-box" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; padding: 5px 8px; border-radius: 6px; z-index: 2;">
+                                <i class="bi bi-bandaid"></i>
+                            </div>
+                        </div>
+                        <h2 class="mb-0 fw-bold" id="totalSakit" style="color: #1E293B; z-index: 2;">0</h2>
+                        <div style="position: absolute; right: -20px; top: -20px; width: 80px; height: 80px; background: rgba(245,158,11,0.03); border-radius: 50%; z-index: 1;"></div>
                     </div>
-                    <div class="stat-details">
-                        <h3 id="totalAbsent">0</h3>
-                        <p>Belum Hadir</p>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card premium-card border-0 h-100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px; z-index: 2;">IZIN</h6>
+                            <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; padding: 5px 8px; border-radius: 6px; z-index: 2;">
+                                <i class="bi bi-envelope-paper"></i>
+                            </div>
+                        </div>
+                        <h2 class="mb-0 fw-bold" id="totalIzin" style="color: #1E293B; z-index: 2;">0</h2>
+                        <div style="position: absolute; right: -20px; top: -20px; width: 80px; height: 80px; background: rgba(59,130,246,0.03); border-radius: 50%; z-index: 1;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="card premium-card border-0 h-100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div class="card-body p-3 d-flex flex-column justify-content-between position-relative overflow-hidden">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-muted text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px; z-index: 2;">ALPA</h6>
+                            <div class="icon-box" style="background: rgba(239, 68, 68, 0.1); color: #EF4444; padding: 5px 8px; border-radius: 6px; z-index: 2;">
+                                <i class="bi bi-x-lg"></i>
+                            </div>
+                        </div>
+                        <h2 class="mb-0 fw-bold" id="totalAlpa" style="color: #1E293B; z-index: 2;">0</h2>
+                        <div style="position: absolute; right: -20px; top: -20px; width: 80px; height: 80px; background: rgba(239,68,68,0.03); border-radius: 50%; z-index: 1;"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Attendance Percentage -->
+        <!-- Lower Layout: Chart & Quick Access -->
         <div class="row g-4 mb-4">
-            <div class="col-lg-4">
-                <div class="card premium-card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title mb-4">Persentase Kehadiran Hari Ini</h5>
-                        <div class="percentage-circle">
-                            <svg width="200" height="200">
-                                <circle cx="100" cy="100" r="90" fill="none" stroke="#e0e0e0" stroke-width="15"/>
-                                <circle id="percentageCircle" cx="100" cy="100" r="90" fill="none" stroke="url(#gradient)" stroke-width="15" stroke-dasharray="565.48" stroke-dashoffset="565.48" transform="rotate(-90 100 100)" style="transition: stroke-dashoffset 1s ease;"/>
-                                <defs>
-                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:#A855F7;stop-opacity:1" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                            <div class="percentage-text">
-                                <h2 id="attendancePercentage">0%</h2>
-                                <p>Kehadiran</p>
-                            </div>
+            <!-- Main Chart -->
+            <div class="col-lg-8">
+                <div class="card premium-card border-0 h-100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <i class="bi bi-bar-chart-line text-success fs-5"></i>
+                            <h6 class="mb-0 fw-bold text-dark">Grafik Statistik Kehadiran</h6>
+                        </div>
+                        <div style="position: relative; height: 280px; width: 100%;">
+                            <canvas id="dailyChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="col-lg-8">
-                <div class="card premium-card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">Grafik Kehadiran Harian</h5>
-                        <canvas id="dailyChart" height="100"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts -->
-        <div class="row g-4 mb-4">
-            <div class="col-lg-6">
-                <div class="card premium-card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">Grafik Kehadiran Mingguan</h5>
-                        <canvas id="weeklyChart" height="120"></canvas>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6">
-                <div class="card premium-card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">Grafik Kehadiran Bulanan</h5>
-                        <canvas id="monthlyChart" height="120"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="row g-4">
-            <div class="col-12">
-                <div class="card premium-card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">Aktivitas Absensi Terbaru</h5>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Waktu</th>
-                                        <th>NISN</th>
-                                        <th>Nama</th>
-                                        <th>Kelas</th>
-                                        <th>Jenis Absensi</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recentActivityTable">
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted">Loading...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+            <!-- Quick Access -->
+            <div class="col-lg-4">
+                <div class="card premium-card border-0 h-100" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <i class="bi bi-lightning-charge-fill text-warning fs-5"></i>
+                            <h6 class="mb-0 fw-bold text-dark">Akses Cepat</h6>
+                        </div>
+                        
+                        <div class="d-flex flex-column gap-3">
+                            <!-- Quick Access Item 1 -->
+                            <a href="scan-qr.html" class="text-decoration-none p-3 border rounded-3 d-flex align-items-center gap-3 quick-access-item" style="transition: all 0.3s ease;">
+                                <div class="icon-box rounded-2 p-2" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">
+                                    <i class="bi bi-upc-scan fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px;">Scan Absensi</h6>
+                                    <small class="text-muted" style="font-size: 11px;">Mode scanner barcode</small>
+                                </div>
+                            </a>
+                            
+                            <!-- Quick Access Item 2 -->
+                            <a href="students.html" class="text-decoration-none p-3 border rounded-3 d-flex align-items-center gap-3 quick-access-item" style="transition: all 0.3s ease;">
+                                <div class="icon-box rounded-2 p-2" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6;">
+                                    <i class="bi bi-mortarboard-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px;">Data Siswa</h6>
+                                    <small class="text-muted" style="font-size: 11px;">Kelola database siswa</small>
+                                </div>
+                            </a>
+                            
+                            <!-- Quick Access Item 3 -->
+                            <a href="reports.html" class="text-decoration-none p-3 border rounded-3 d-flex align-items-center gap-3 quick-access-item" style="transition: all 0.3s ease;">
+                                <div class="icon-box rounded-2 p-2" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">
+                                    <i class="bi bi-file-earmark-text-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px;">Laporan</h6>
+                                    <small class="text-muted" style="font-size: 11px;">Export & rekap data</small>
+                                </div>
+                            </a>
+                            
+                            <!-- Quick Access Item 4 -->
+                            <a href="settings.html" class="text-decoration-none p-3 border rounded-3 d-flex align-items-center gap-3 quick-access-item" style="transition: all 0.3s ease;">
+                                <div class="icon-box rounded-2 p-2" style="background: rgba(239, 68, 68, 0.1); color: #EF4444;">
+                                    <i class="bi bi-calendar-x-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px;">Pengaturan</h6>
+                                    <small class="text-muted" style="font-size: 11px;">Waktu & informasi sekolah</small>
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -295,3 +317,5 @@
     <script src="assets/js/dashboard.js"></script>
 </body>
 </html>
+
+

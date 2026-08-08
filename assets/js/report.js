@@ -5,29 +5,9 @@
 
 checkAuth();
 
-let reportData = [];
-
-// Jurusan options (sama seperti di students.js)
-const JURUSAN_OPTIONS = {
-    'X': ['TKR A', 'TKR B', 'TKR C', 'TITL A', 'TITL B', 'TKP', 'ATPH'],
-    'XI': ['TKR A', 'TKR B', 'TKR C', 'TITL A', 'TITL B', 'TKP', 'ATPH'],
-    'XII': ['TKR A', 'TKR B', 'TKR C', 'TITL A', 'TITL B', 'TKP', 'ATPH']
-};
-
-// Mapping singkat ke nama lengkap jurusan
-const JURUSAN_NAMA_LENGKAP = {
-    'TKR': 'Teknik Kendaraan Ringan',
-    'TITL': 'Teknik Instalasi Tenaga Listrik',
-    'TKP': 'Teknik Konstruksi dan Perumahan',
-    'ATPH': 'Agribisnis Tanaman Pangan dan Hortikultura',
-    'ATP': 'Agribisnis Tanaman Pangan',
-    'H': 'Perhotelan'
-};
-
-// Initialize
+let reportData = [];// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setDefaultMonth();
-    initTingkatJurusanDropdown();
     initFilterButton();
     initExportButtons();
 });
@@ -42,26 +22,6 @@ function setDefaultMonth() {
     document.getElementById('filterMonth').value = `${year}-${month}`;
 }
 
-/**
- * Initialize Tingkat and Jurusan dropdown
- */
-function initTingkatJurusanDropdown() {
-    // Handle tingkat change
-    document.getElementById('filterTingkat').addEventListener('change', (e) => {
-        const tingkat = e.target.value;
-        const jurusanSelect = document.getElementById('filterJurusan');
-        jurusanSelect.innerHTML = '<option value="">Semua</option>';
-        
-        if (tingkat && JURUSAN_OPTIONS[tingkat]) {
-            JURUSAN_OPTIONS[tingkat].forEach(jurusan => {
-                const option = document.createElement('option');
-                option.value = jurusan;
-                option.textContent = jurusan;
-                jurusanSelect.appendChild(option);
-            });
-        }
-    });
-}
 
 /**
  * Initialize filter button
@@ -77,9 +37,7 @@ function initFilterButton() {
  */
 async function generateReport() {
     const filterMonth = document.getElementById('filterMonth').value;
-    const filterTingkat = document.getElementById('filterTingkat').value;
-    const filterJurusan = document.getElementById('filterJurusan').value;
-    const filterJenis = document.getElementById('filterJenisReport').value;
+    const filterKelas = document.getElementById('filterKelas').value;
     
     if (!filterMonth) {
         showError('Pilih bulan untuk laporan');
@@ -97,53 +55,100 @@ async function generateReport() {
         
         console.log(`Querying from ${startDate} to ${endDate}`);
         
-        // Simple query without orderBy
-        let query = db.collection('attendance')
-            .where('tanggal', '>=', startDate)
-            .where('tanggal', '<=', endDate);
+        // 1. Ambil data semua siswa aktif
+        let studentsQuery = db.collection('students').where('status', '==', 'Aktif');
+        const studentsSnapshot = await studentsQuery.get();
         
-        const snapshot = await query.get();
-        
-        reportData = [];
-        snapshot.forEach((doc) => {
-            const data = { id: doc.id, ...doc.data() };
-            
-            // Apply class filter (tingkat + jurusan)
-            if (filterTingkat || filterJurusan) {
-                const kelasUpper = (data.kelas || '').toUpperCase();
+        let students = [];
+        studentsSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (filterKelas) {
+                const kelasVal = (data.kelas || '').toLowerCase();
+                const filterText = filterKelas.toLowerCase().trim();
                 
-                if (filterTingkat && !kelasUpper.startsWith(filterTingkat.toUpperCase())) {
-                    return; // Skip if tingkat doesn't match
+                let match = false;
+                // Penanganan khusus untuk tingkat Romawi (VII, VIII, IX, X, XI, XII) agar tidak bentrok
+                const isRomanNumeral = /^(i{1,3}|iv|v|vi{1,3}|ix|x|xi{1,2}|xii)$/i.test(filterText);
+                if (isRomanNumeral) {
+                    const regex = new RegExp(`\\b${filterText}\\b`, 'i');
+                    match = regex.test(kelasVal);
+                } else {
+                    match = kelasVal.includes(filterText);
                 }
                 
-                if (filterJurusan) {
-                    const jurusanSingkat = filterJurusan.split(' ')[0];
-                    const jurusanAngka = filterJurusan.split(' ')[1] || '';
-                    const namaLengkap = JURUSAN_NAMA_LENGKAP[jurusanSingkat] || jurusanSingkat;
-                    
-                    const jurusanMatch = kelasUpper.includes(jurusanSingkat.toUpperCase()) ||
-                                        kelasUpper.includes(namaLengkap.toUpperCase());
-                    
-                    const angkaMatch = jurusanAngka === '' ? true : kelasUpper.includes(jurusanAngka);
-                    
-                    if (!jurusanMatch || !angkaMatch) {
-                        return; // Skip if jurusan doesn't match
-                    }
+                if (!match) {
+                    return; // Skip
                 }
             }
-            
-            // Apply jenis filter
-            if (filterJenis && data.jenisAbsensi !== filterJenis) return;
-            
-            reportData.push(data);
+            students.push({
+                id: doc.id,
+                nisn: data.nisn,
+                nama: data.nama,
+                kelas: data.kelas || '-'
+            });
         });
         
-        // Sort client-side by date and time (descending)
-        reportData.sort((a, b) => {
-            if (a.tanggal !== b.tanggal) {
-                return b.tanggal.localeCompare(a.tanggal);
+        // Sort students by name
+        students.sort((a, b) => a.nama.localeCompare(b.nama));
+        
+        // 2. Ambil data absensi selama 1 bulan
+        const attendanceSnapshot = await db.collection('attendance')
+            .where('tanggal', '>=', startDate)
+            .where('tanggal', '<=', endDate)
+            .get();
+            
+        // 3. Kumpulkan active dates (hari aktif sekolah) dan petakan data absensi
+        const activeDates = new Set();
+        const attendanceMap = {}; // format: { nisn: { tanggal: status } }
+        
+        attendanceSnapshot.forEach(doc => {
+            const data = doc.data();
+            const nisn = data.nisn;
+            const tgl = data.tanggal;
+            
+            activeDates.add(tgl);
+            
+            if (!attendanceMap[nisn]) {
+                attendanceMap[nisn] = {};
             }
-            return b.jam.localeCompare(a.jam);
+            
+            // Tentukan status harian
+            let dailyStatus = 'Hadir'; // default if scan exists
+            if (data.statusKehadiran && data.statusKehadiran !== 'Belum Absen') {
+                dailyStatus = data.statusKehadiran;
+            } else if (data.jenisAbsensi === 'Manual' && data.statusWaktu !== 'Tepat Waktu' && data.statusWaktu !== 'Terlambat') {
+                 // Fallback untuk data manual lama
+                 dailyStatus = data.statusKehadiran || 'Alpa';
+            }
+            
+            // Jika dalam 1 hari ada 2 record (masuk & pulang), pastikan tidak menimpa status manual (sakit/izin)
+            if (!attendanceMap[nisn][tgl] || (attendanceMap[nisn][tgl] === 'Hadir' && dailyStatus !== 'Hadir')) {
+                attendanceMap[nisn][tgl] = dailyStatus;
+            }
+        });
+        
+        // 4. Rekapitulasi per siswa
+        reportData = students.map(student => {
+            let hadir = 0, sakit = 0, izin = 0, alpa = 0;
+            const studentAtt = attendanceMap[student.nisn] || {};
+            
+            // Cek setiap hari aktif sekolah
+            activeDates.forEach(date => {
+                const status = studentAtt[date];
+                
+                if (status === 'Hadir') hadir++;
+                else if (status === 'Sakit') sakit++;
+                else if (status === 'Izin') izin++;
+                else if (status === 'Alpa') alpa++;
+                else alpa++; // Jika tidak ada record sama sekali di hari aktif, otomatis Alpa
+            });
+            
+            return {
+                nisn: student.nisn,
+                nama: student.nama,
+                kelas: student.kelas,
+                hadir, sakit, izin, alpa
+            };
         });
         
         displayReport();
@@ -202,24 +207,21 @@ function displayReport() {
     tbody.innerHTML = '';
     
     if (reportData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Tidak ada data untuk periode yang dipilih</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Tidak ada data untuk periode yang dipilih</td></tr>';
         return;
     }
     
     reportData.forEach((data, index) => {
-        const { tingkat, jurusan } = parseKelas(data.kelas);
-        
         const row = `
             <tr>
                 <td>${index + 1}</td>
-                <td>${data.tanggal}</td>
+                <td class="fw-bold">${data.nama}</td>
                 <td>${data.nisn}</td>
-                <td>${data.nama}</td>
-                <td>${tingkat}</td>
-                <td>${jurusan}</td>
-                <td>${data.jenisAbsensi}</td>
-                <td>${data.jam}</td>
-                <td><span class="badge ${data.statusWaktu === 'Tepat Waktu' ? 'badge-success' : 'badge-warning'}">${data.statusWaktu}</span></td>
+                <td><span class="badge bg-light text-dark border">${data.kelas}</span></td>
+                <td><span class="badge status-hadir px-3">${data.hadir}</span></td>
+                <td><span class="badge status-sakit px-3">${data.sakit}</span></td>
+                <td><span class="badge status-izin px-3">${data.izin}</span></td>
+                <td><span class="badge status-alpa px-3">${data.alpa}</span></td>
             </tr>
         `;
         tbody.innerHTML += row;
@@ -246,34 +248,48 @@ function exportToExcel() {
     
     try {
         const excelData = reportData.map((data, index) => {
-            const { tingkat, jurusan } = parseKelas(data.kelas);
-            
             return {
                 'No': index + 1,
-                'Tanggal': data.tanggal,
+                'Nama Siswa': data.nama,
                 'NISN': data.nisn,
-                'Nama': data.nama,
-                'Tingkat': tingkat,
-                'Jurusan': jurusan,
-                'Jenis Absensi': data.jenisAbsensi,
-                'Jam': data.jam,
-                'Status': data.statusWaktu
+                'Kelas': data.kelas,
+                'Hadir': data.hadir,
+                'Sakit': data.sakit,
+                'Izin': data.izin,
+                'Alpa': data.alpa
             };
         });
         
-        const ws = XLSX.utils.json_to_sheet(excelData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Laporan Absensi');
-        
         const filterMonth = document.getElementById('filterMonth').value;
-        const fileName = `Laporan_Absensi_${filterMonth}.xlsx`;
-        XLSX.writeFile(wb, fileName);
+        const [year, month] = filterMonth.split('-');
+        const monthName = new Date(year, month - 1, 1).toLocaleString('id-ID', { month: 'long' });
         
-        showSuccess('Laporan berhasil diexport ke Excel');
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        // Auto-size columns
+        const colWidths = [
+            { wch: 5 },  // No
+            { wch: 30 }, // Nama
+            { wch: 15 }, // NISN
+            { wch: 15 }, // Kelas
+            { wch: 10 }, // Hadir
+            { wch: 10 }, // Sakit
+            { wch: 10 }, // Izin
+            { wch: 10 }  // Alpa
+        ];
+        worksheet['!cols'] = colWidths;
+        
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Rekap Absensi');
+        
+        const filterKelas = document.getElementById('filterKelas').value;
+        const fileName = `Rekap_Absensi_${filterKelas ? filterKelas + '_' : ''}${monthName}_${year}.xlsx`;
+        
+        XLSX.writeFile(workbook, fileName);
         
     } catch (error) {
-        console.error('Error exporting to Excel:', error);
-        showError('Gagal export ke Excel');
+        console.error('Export Excel Error:', error);
+        showError('Gagal mengexport file Excel');
     }
 }
 
@@ -290,57 +306,61 @@ function exportToPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Title
-        doc.setFontSize(16);
-        doc.text('Laporan Absensi Jama\'ah', 14, 15);
-        doc.setFontSize(12);
-        doc.text('SMK Negeri 1 Sangasanga', 14, 22);
-        
-        // Filter info
-        doc.setFontSize(10);
         const filterMonth = document.getElementById('filterMonth').value;
-        const filterTingkat = document.getElementById('filterTingkat').value;
-        const filterJurusan = document.getElementById('filterJurusan').value;
+        const filterKelas = document.getElementById('filterKelas').value;
+        const [year, month] = filterMonth.split('-');
+        const monthName = new Date(year, month - 1, 1).toLocaleString('id-ID', { month: 'long' });
         
-        let filterText = `Bulan: ${filterMonth}`;
-        if (filterTingkat) filterText += ` | Tingkat: ${filterTingkat}`;
-        if (filterJurusan) filterText += ` | Jurusan: ${filterJurusan}`;
+        const schoolName = document.getElementById('schoolName')?.textContent || 'Sistem Absensi Digital';
         
-        doc.text(filterText, 14, 30);
+        // Add header
+        doc.setFontSize(16);
+        doc.text('REKAPITULASI ABSENSI BULANAN', 105, 15, { align: 'center' });
         
-        // Table
-        const tableData = reportData.map((data, index) => {
-            const { tingkat, jurusan } = parseKelas(data.kelas);
-            
-            return [
-                index + 1,
-                data.tanggal,
-                data.nisn,
-                data.nama,
-                tingkat,
-                jurusan,
-                data.jenisAbsensi,
-                data.jam,
-                data.statusWaktu
-            ];
-        });
+        doc.setFontSize(12);
+        doc.text(schoolName, 105, 22, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.text(`Bulan: ${monthName} ${year}`, 14, 32);
+        if (filterKelas) {
+            doc.text(`Kelas: ${filterKelas}`, 14, 38);
+        }
+        
+        // Prepare data for autoTable
+        const tableData = reportData.map((data, index) => [
+            index + 1,
+            data.nama,
+            data.nisn,
+            data.kelas,
+            data.hadir,
+            data.sakit,
+            data.izin,
+            data.alpa
+        ]);
         
         doc.autoTable({
-            startY: 35,
-            head: [['No', 'Tanggal', 'NISN', 'Nama', 'Tingkat', 'Jurusan', 'Jenis', 'Jam', 'Status']],
+            startY: filterKelas ? 42 : 36,
+            head: [['No', 'Nama Siswa', 'NISN', 'Kelas', 'Hadir', 'Sakit', 'Izin', 'Alpa']],
             body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [30, 58, 138] }, // Yayasan Blue
             styles: { fontSize: 8 },
-            headStyles: { fillColor: [124, 58, 237] }
+            columnStyles: {
+                0: { cellWidth: 10, halign: 'center' },
+                2: { cellWidth: 25 },
+                4: { cellWidth: 15, halign: 'center' },
+                5: { cellWidth: 15, halign: 'center' },
+                6: { cellWidth: 15, halign: 'center' },
+                7: { cellWidth: 15, halign: 'center' }
+            }
         });
         
-        const fileName = `Laporan_Absensi_${filterMonth}.pdf`;
+        const fileName = `Rekap_Absensi_${filterKelas ? filterKelas + '_' : ''}${monthName}_${year}.pdf`;
         doc.save(fileName);
         
-        showSuccess('Laporan berhasil diexport ke PDF');
-        
     } catch (error) {
-        console.error('Error exporting to PDF:', error);
-        showError('Gagal export ke PDF');
+        console.error('Export PDF Error:', error);
+        showError('Gagal mengexport file PDF');
     }
 }
 
@@ -355,3 +375,5 @@ function printReport() {
     
     window.print();
 }
+
+

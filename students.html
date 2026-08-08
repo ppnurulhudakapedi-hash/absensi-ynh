@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Siswa - Absensi Jama'ah SMK Negeri 1 Sangasanga</title>
+    <title>Data Siswa - Sistem Absensi Digital YAYASAN NURUL HUDA KAPEDI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -15,10 +15,28 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="logo-container-sidebar">
-                <img src="assets/img/logo-smk.png" alt="Logo SMK N 1 Sangasanga" class="sidebar-logo">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-container-sidebar">
+                    <img src="assets/img/logo-yayasan.png" alt="Logo" class="sidebar-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback" style="display: none;">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+                <div class="sidebar-title text-start text-white">
+                    <h5 class="mb-0 fw-bold fs-6">E-ABSENSI</h5>
+                    <small class="opacity-75" style="font-size: 10px;">YAYASAN NURUL HUDA</small>
+                </div>
             </div>
-            <h5>Absensi SMK Negeri 1 Sangasanga</h5>
+            
+            <div class="sidebar-user-card mt-4">
+                <div class="user-avatar" id="adminAvatar">
+                    <div class="avatar-text">A</div>
+                </div>
+                <div class="user-details text-start">
+                    <h6 class="mb-0 text-white fw-bold" id="adminName">Admin</h6>
+                    <small class="text-white opacity-75 fw-semibold" style="font-size: 10px;" id="adminRole">ADMIN</small>
+                </div>
+            </div>
         </div>
         <ul class="sidebar-menu">
             <li class="menu-item">
@@ -91,8 +109,7 @@
                                     <th style="width: 5%;">No</th>
                                     <th>Nama</th>
                                     <th>NISN</th>
-                                    <th>Tingkat</th>
-                                    <th>Jurusan</th>
+                                    <th>Kelas</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -125,38 +142,17 @@
                                 <input type="radio" id="printAll" name="printType" value="all" checked>
                                 <label for="printAll" style="display: inline; margin-right: 30px;">Cetak Semua Siswa</label>
                                 <input type="radio" id="printFilter" name="printType" value="filter">
-                                <label for="printFilter" style="display: inline;">Cetak Berdasarkan Tingkat & Jurusan</label>
+                                <label for="printFilter" style="display: inline;">Cetak Berdasarkan Kelas</label>
                             </div>
                         </div>
                         
                         <div id="filterOptions" style="display: none;">
                             <div class="mb-3">
-                                <label class="form-label">Tingkat *</label>
-                                <select class="form-select" id="filterTingkat">
-                                    <option value="">Pilih Tingkat</option>
-                                    <option value="X">X</option>
-                                    <option value="XI">XI</option>
-                                    <option value="XII">XII</option>
-                                </select>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Jurusan *</label>
-                                <select class="form-select" id="filterJurusan">
-                                    <option value="">Pilih Jurusan</option>
-                                </select>
+                                <label class="form-label">Filter Kelas *</label>
+                                <input type="text" class="form-control" id="filterKelas" placeholder="Misal: X TKR A atau XI">
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label class="form-label">Format:</label>
-                            <div>
-                                <input type="radio" id="formatPrint" name="format" value="print" checked>
-                                <label for="formatPrint" style="display: inline; margin-right: 30px;">Print Langsung</label>
-                                <input type="radio" id="formatPDF" name="format" value="pdf">
-                                <label for="formatPDF" style="display: inline;">Download PDF</label>
-                            </div>
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -225,20 +221,9 @@
                                     <option value="Perempuan">Perempuan</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Tingkat</label>
-                                <select class="form-select" id="tingkat">
-                                    <option value="">Pilih Tingkat...</option>
-                                    <option value="X">X</option>
-                                    <option value="XI">XI</option>
-                                    <option value="XII">XII</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Jurusan</label>
-                                <select class="form-select" id="jurusan">
-                                    <option value="">Pilih Jurusan...</option>
-                                </select>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Kelas</label>
+                                <input type="text" class="form-control" id="kelas" placeholder="Misal: X TKR A">
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Alamat</label>
@@ -273,3 +258,5 @@
     <script src="assets/js/students.js"></script>
 </body>
 </html>
+
+

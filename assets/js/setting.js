@@ -29,12 +29,10 @@ async function loadSettings() {
         const timeDoc = await db.collection('settings').doc('time').get();
         if (timeDoc.exists) {
             const timeData = timeDoc.data();
-            document.getElementById('subuhStart').value = timeData.subuhStart || '04:30';
-            document.getElementById('subuhEnd').value = timeData.subuhEnd || '05:30';
-            document.getElementById('dhuhaStart').value = timeData.dhuhaStart || '06:30';
-            document.getElementById('dhuhaEnd').value = timeData.dhuhaEnd || '07:30';
-            document.getElementById('zuhurStart').value = timeData.zuhurStart || '11:30';
-            document.getElementById('zuhurEnd').value = timeData.zuhurEnd || '12:30';
+            document.getElementById('jamMasukStart').value = timeData.jamMasukStart || '06:00';
+            document.getElementById('jamMasukEnd').value = timeData.jamMasukEnd || '07:30';
+            document.getElementById('jamPulangStart').value = timeData.jamPulangStart || '14:00';
+            document.getElementById('jamPulangEnd').value = timeData.jamPulangEnd || '16:00';
         }
         
     } catch (error) {
@@ -83,12 +81,10 @@ function initTimeForm() {
         e.preventDefault();
         
         const timeData = {
-            subuhStart: document.getElementById('subuhStart').value,
-            subuhEnd: document.getElementById('subuhEnd').value,
-            dhuhaStart: document.getElementById('dhuhaStart').value,
-            dhuhaEnd: document.getElementById('dhuhaEnd').value,
-            zuhurStart: document.getElementById('zuhurStart').value,
-            zuhurEnd: document.getElementById('zuhurEnd').value,
+            jamMasukStart: document.getElementById('jamMasukStart').value,
+            jamMasukEnd: document.getElementById('jamMasukEnd').value,
+            jamPulangStart: document.getElementById('jamPulangStart').value,
+            jamPulangEnd: document.getElementById('jamPulangEnd').value,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
@@ -121,16 +117,12 @@ function initTimeForm() {
  * Validate time settings
  */
 function validateTimeSettings(timeData) {
-    const subuhStartMinutes = timeToMinutes(timeData.subuhStart);
-    const subuhEndMinutes = timeToMinutes(timeData.subuhEnd);
-    const dhuhaStartMinutes = timeToMinutes(timeData.dhuhaStart);
-    const dhuhaEndMinutes = timeToMinutes(timeData.dhuhaEnd);
-    const zuhurStartMinutes = timeToMinutes(timeData.zuhurStart);
-    const zuhurEndMinutes = timeToMinutes(timeData.zuhurEnd);
+    const masukStart = new Date(`2000-01-01T${timeData.jamMasukStart}`);
+    const masukEnd = new Date(`2000-01-01T${timeData.jamMasukEnd}`);
+    const pulangStart = new Date(`2000-01-01T${timeData.jamPulangStart}`);
+    const pulangEnd = new Date(`2000-01-01T${timeData.jamPulangEnd}`);
     
-    return subuhStartMinutes < subuhEndMinutes && 
-           dhuhaStartMinutes < dhuhaEndMinutes && 
-           zuhurStartMinutes < zuhurEndMinutes;
+    return (masukStart < masukEnd) && (pulangStart < pulangEnd) && (masukEnd < pulangStart);
 }
 
 /**
@@ -139,4 +131,4 @@ function validateTimeSettings(timeData) {
 function timeToMinutes(time) {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
-}
+

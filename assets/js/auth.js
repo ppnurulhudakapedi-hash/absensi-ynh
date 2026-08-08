@@ -17,7 +17,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const rememberMe = document.getElementById('rememberMe').checked;
+    const rememberMeElement = document.getElementById('rememberMe');
+    const rememberMe = rememberMeElement ? rememberMeElement.checked : true;
     
     // Show loading
     showLoading('Memproses login...');
@@ -95,3 +96,5 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         });
     }
 });
+
+

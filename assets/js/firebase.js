@@ -5,12 +5,13 @@
 
 // TODO: Ganti dengan konfigurasi Firebase Anda
 const firebaseConfig = {
-  apiKey: "AIzaSyDs6WOn1w3bEDvzP77w-S_COIBgXDC8qAE",
-  authDomain: "absensi-jamaah.firebaseapp.com",
-  projectId: "absensi-jamaah",
-  storageBucket: "absensi-jamaah.firebasestorage.app",
-  messagingSenderId: "878406946480",
-  appId: "1:878406946480:web:0e63c7316c0d8f92d67575"
+  apiKey: "AIzaSyD7pZk9WmhrioO_D3Qz3nq3ssOC6yp3Rx0",
+  authDomain: "absensi-nh.firebaseapp.com",
+  projectId: "absensi-nh",
+  storageBucket: "absensi-nh.firebasestorage.app",
+  messagingSenderId: "427599547520",
+  appId: "1:427599547520:web:5a3521d4988251e6dbea65",
+  measurementId: "G-T9SPJM2NGN"
 };
 
 // Initialize Firebase
@@ -40,3 +41,5 @@ db.enablePersistence()
     });
 
 console.log('Firebase initialized successfully');
+
+

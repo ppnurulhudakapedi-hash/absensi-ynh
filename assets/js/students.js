@@ -10,79 +10,8 @@ const itemsPerPage = 10;
 let allStudents = [];
 let filteredStudents = [];
 
-// Jurusan options dan mapping ke nama lengkap
-const JURUSAN_OPTIONS = {
-    'X': ['TKR A', 'TKR B', 'TKR C', 'TITL A', 'TITL B', 'TKP', 'ATPH'],
-    'XI': ['TKR A', 'TKR B', 'TKR C', 'TITL A', 'TITL B', 'TKP', 'ATPH'],
-    'XII': ['TKR A', 'TKR B', 'TKR C', 'TITL A', 'TITL B', 'TKP', 'ATPH']
-};
-
-// Mapping singkat ke nama lengkap jurusan
-const JURUSAN_NAMA_LENGKAP = {
-    'TKR': 'Teknik Kendaraan Ringan',
-    'TITL': 'Teknik Instalasi Tenaga Listrik',
-    'TKP': 'Teknik Konstruksi Permesinan',
-    'ATP': 'Agribisnis Tanaman Pangan',
-    'ATPH': 'Agribisnis Tanaman Pangan dan Hortikultura',
-    'H': 'Perhotelan'
-};
-
-/**
- * Parse kelas string to extract tingkat, jurusan, and angka
- * Examples:
- * "X TKR A" -> {tingkat: "X", jurusanFull: "TKR A", jurusanSingkat: "TKR", jurusanAngka: "A"}
- * "XI Teknik Kendaraan Ringan B" -> {tingkat: "XI", jurusanFull: "Teknik Kendaraan Ringan B", jurusanSingkat: "TKR", jurusanAngka: "B"}
- */
-function parseKelasForFilter(kelas) {
-    if (!kelas) return null;
-    
-    const kelasUpper = kelas.toUpperCase().trim();
-    let tingkat = '', jurusanFull = '';
-    
-    // Extract tingkat (X, XI, XII)
-    const tingkatMatch = kelasUpper.match(/^(X|XI|XII)\s+/);
-    if (tingkatMatch) {
-        tingkat = tingkatMatch[1];
-        jurusanFull = kelasUpper.substring(tingkatMatch[0].length).trim();
-    } else {
-        return null;
-    }
-    
-    // Extract jurusan angka (A, B, C, etc)
-    const angkaMatch = jurusanFull.match(/([A-Z])$/);
-    const jurusanAngka = angkaMatch ? angkaMatch[1] : '';
-    
-    // Try to identify jurusan singkat
-    let jurusanSingkat = '';
-    if (jurusanFull.includes('TKR') || jurusanFull.includes('TEKNIK KENDARAAN RINGAN')) {
-        jurusanSingkat = 'TKR';
-    } else if (jurusanFull.includes('TITL') || jurusanFull.includes('TEKNIK INSTALASI TENAGA LISTRIK')) {
-        jurusanSingkat = 'TITL';
-    } else if (jurusanFull.includes('TKP') || 
-               jurusanFull.includes('TEKNIK KONSTRUKSI PERMESINAN') ||
-               jurusanFull.includes('TEKNIK KONSTRUKSI DAN PERUMAHAN') ||
-               jurusanFull.includes('KONSTRUKSI DAN PERUMAHAN')) {
-        jurusanSingkat = 'TKP';
-    } else if (jurusanFull.includes('ATPH') || 
-               jurusanFull.includes('AGRIBISNIS TANAMAN PANGAN DAN HORTIKULTURA') ||
-               jurusanFull.includes('TANAMAN PANGAN DAN HORTIKULTURA')) {
-        jurusanSingkat = 'ATPH';
-    } else if (jurusanFull.includes('ATP') || 
-               jurusanFull.includes('AGRIBISNIS TANAMAN PANGAN')) {
-        jurusanSingkat = 'ATP';
-    } else if (jurusanFull.includes('PERHOTELAN') || jurusanFull.includes('H ')) {
-        jurusanSingkat = 'H';
-    }
-    
-    console.log(`Parse: "${kelas}" -> Tingkat=${tingkat}, Singkat=${jurusanSingkat}, Angka=${jurusanAngka}, Full=${jurusanFull}`);
-    
-    return {
-        tingkat,
-        jurusanFull,
-        jurusanSingkat,
-        jurusanAngka
-    };
-}
+/// Constants for classes if needed, now free-form text input
+// Kept empty to avoid breaking refs if any
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -142,7 +71,7 @@ function displayStudents() {
     const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
     
     paginatedStudents.forEach((student, index) => {
-        const { tingkat, jurusan } = parseKelas(student.kelas);
+        const kelas = student.kelas || '-';
         const noUrut = startIndex + index + 1;
         
         const row = `
@@ -150,12 +79,11 @@ function displayStudents() {
                 <td>${noUrut}</td>
                 <td>${student.nama}</td>
                 <td>${student.nisn}</td>
-                <td>${tingkat}</td>
-                <td>${jurusan}</td>
+                <td>${kelas}</td>
                 <td><span class="badge ${student.status === 'Aktif' ? 'badge-success' : 'badge-danger'}">${student.status}</span></td>
                 <td>
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-success" onclick="showQR('${student.id}', '${student.nisn}', '${student.nama.replace(/'/g, "\\'")}', '${tingkat}', '${jurusan}')" title="Generate QR">
+                        <button type="button" class="btn btn-sm btn-success" onclick="showQR('${student.id}', '${student.nisn}', '${student.nama.replace(/'/g, "\\'")}', '${kelas}')" title="Generate QR">
                             <i class="bi bi-qr-code"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-primary" onclick="editStudent('${student.id}')" title="Edit">
@@ -172,25 +100,6 @@ function displayStudents() {
     });
     
     renderPagination();
-}
-
-/**
- * Parse kelas menjadi tingkat dan jurusan
- */
-function parseKelas(kelas) {
-    if (!kelas || kelas === '-') {
-        return { tingkat: '-', jurusan: '-' };
-    }
-    
-    // Format: "XI TKR A" atau "X TITL B"
-    const parts = kelas.trim().split(/\s+/);
-    if (parts.length >= 2) {
-        const tingkat = parts[0];
-        const jurusan = parts.slice(1).join(' ');
-        return { tingkat, jurusan };
-    }
-    
-    return { tingkat: kelas, jurusan: '-' };
 }
 
 /**
@@ -278,10 +187,21 @@ function initSearchFilter() {
         const query = e.target.value.toLowerCase();
         
         filteredStudents = allStudents.filter((student) => {
+            let classMatch = false;
+            if (student.kelas) {
+                const isRomanNumeral = /^(i{1,3}|iv|v|vi{1,3}|ix|x|xi{1,2}|xii)$/i.test(query);
+                if (isRomanNumeral) {
+                    const regex = new RegExp(`\\b${query}\\b`, 'i');
+                    classMatch = regex.test(student.kelas);
+                } else {
+                    classMatch = student.kelas.toLowerCase().includes(query);
+                }
+            }
+
             return student.nama.toLowerCase().includes(query) ||
                    student.nisn.toLowerCase().includes(query) ||
                    (student.nis && student.nis.toLowerCase().includes(query)) ||
-                   student.kelas.toLowerCase().includes(query);
+                   classMatch;
         });
         
         currentPage = 1;
@@ -327,37 +247,7 @@ async function editStudent(id) {
         document.getElementById('alamat').value = student.alamat || '';
         document.getElementById('status').value = student.status;
         
-        // Parse kelas into tingkat and jurusan
-        const parsed = parseKelasForFilter(student.kelas);
-        if (parsed && parsed.tingkat) {
-            // Set tingkat
-            document.getElementById('tingkat').value = parsed.tingkat;
-            
-            // Trigger change to populate jurusan options
-            const event = new Event('change');
-            document.getElementById('tingkat').dispatchEvent(event);
-            
-            // Set jurusan after options are populated
-            setTimeout(() => {
-                // Find matching jurusan option
-                const jurusanSelect = document.getElementById('jurusan');
-                const options = Array.from(jurusanSelect.options);
-                
-                // Try to match with parsed singkat + angka
-                let matchValue = '';
-                if (parsed.jurusanSingkat && parsed.jurusanAngka) {
-                    matchValue = `${parsed.jurusanSingkat} ${parsed.jurusanAngka}`;
-                } else if (parsed.jurusanSingkat) {
-                    matchValue = parsed.jurusanSingkat;
-                }
-                
-                const matchedOption = options.find(opt => opt.value === matchValue);
-                if (matchedOption) {
-                    jurusanSelect.value = matchValue;
-                }
-            }, 100);
-        }
-        
+        document.getElementById('kelas').value = student.kelas || '';
         const modal = new bootstrap.Modal(document.getElementById('studentModal'));
         modal.show();
         
@@ -407,36 +297,13 @@ async function deleteStudent(id, nama) {
  * Initialize form submission
  */
 function initForm() {
-    // Handle tingkat change to populate jurusan
-    document.getElementById('tingkat').addEventListener('change', (e) => {
-        const tingkat = e.target.value;
-        const jurusanSelect = document.getElementById('jurusan');
-        jurusanSelect.innerHTML = '<option value="">Pilih Jurusan...</option>';
-        
-        if (tingkat && JURUSAN_OPTIONS[tingkat]) {
-            JURUSAN_OPTIONS[tingkat].forEach(jurusan => {
-                const option = document.createElement('option');
-                option.value = jurusan;
-                option.textContent = jurusan;
-                jurusanSelect.appendChild(option);
-            });
-        }
-    });
+    // Remove event listener since we are not using tingkat/jurusan anymore
     
     document.getElementById('studentForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const id = document.getElementById('studentId').value;
-        const tingkat = document.getElementById('tingkat').value;
-        const jurusan = document.getElementById('jurusan').value;
-        
-        // Combine tingkat + jurusan into kelas
-        let kelas = '-';
-        if (tingkat && jurusan) {
-            kelas = `${tingkat} ${jurusan}`;
-        } else if (tingkat) {
-            kelas = tingkat;
-        }
+        const kelas = document.getElementById('kelas').value;
         
         const studentData = {
             nisn: document.getElementById('nisn').value,
@@ -496,14 +363,14 @@ let currentStudentData = {};
 /**
  * Show QR Code for student
  */
-function showQR(id, nisn, nama, tingkat, jurusan) {
-    // Store student data
-    currentStudentData = { id, nisn, nama, tingkat, jurusan };
+function showQR(id, nisn, nama, kelas) {
+    // Save current student for download
+    currentStudentData = { id, nisn, nama, kelas };
     
-    // Set student info
+    // Set UI elements
     document.getElementById('qrStudentName').textContent = nama;
     document.getElementById('qrStudentNISN').textContent = nisn;
-    document.getElementById('qrStudentClass').textContent = `${tingkat} ${jurusan}`;
+    document.getElementById('qrStudentClass').textContent = kelas;
     
     // Clear previous QR code
     const container = document.getElementById('qrcodeContainer');
@@ -514,7 +381,7 @@ function showQR(id, nisn, nama, tingkat, jurusan) {
         text: nisn,
         width: 256,
         height: 256,
-        colorDark: "#7C3AED",
+        colorDark: getQRColor(),
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
     });
@@ -522,6 +389,10 @@ function showQR(id, nisn, nama, tingkat, jurusan) {
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('qrModal'));
     modal.show();
+}
+
+function getQRColor() {
+    return "#000000";
 }
 
 /**
@@ -574,22 +445,22 @@ function printQR() {
         document.body.appendChild(printFrame);
     }
     
-    const { tingkat, jurusan } = parseKelas(currentStudentData.kelas);
-    const jurusanUpper = jurusan.toUpperCase();
+    const kelas = currentStudentData.kelas;
+    const kelasUpper = kelas.toUpperCase();
     
     let borderClass = '';
-    if (jurusanUpper.includes('TKR') || jurusanUpper.includes('TEKNIK KENDARAAN')) {
+    if (kelasUpper.includes('TKR') || kelasUpper.includes('TEKNIK KENDARAAN')) {
         borderClass = 'border-tkr';
-    } else if (jurusanUpper.includes('TITL') || jurusanUpper.includes('INSTALASI TENAGA LISTRIK')) {
+    } else if (kelasUpper.includes('TITL') || kelasUpper.includes('INSTALASI TENAGA LISTRIK')) {
         borderClass = 'border-titl';
-    } else if (jurusanUpper.includes('ATPH') || jurusanUpper.includes('AGRIBISNIS') || jurusanUpper.includes('ATP') || jurusanUpper.includes('HORTIKULTURA')) {
+    } else if (kelasUpper.includes('ATPH') || kelasUpper.includes('AGRIBISNIS') || kelasUpper.includes('ATP') || kelasUpper.includes('HORTIKULTURA')) {
         borderClass = 'border-atph';
-    } else if (jurusanUpper.includes('TKP') || jurusanUpper.includes('KONSTRUKSI') || jurusanUpper.includes('PERUMAHAN')) {
+    } else if (kelasUpper.includes('TKP') || kelasUpper.includes('KONSTRUKSI') || kelasUpper.includes('PERUMAHAN')) {
         borderClass = 'border-tkp';
     }
     
     const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-    const logoUrl = baseUrl + '/assets/img/logo-smk.png';
+    const logoUrl = baseUrl + '/assets/img/logo-yayasan.png';
     
     const doc = printFrame.contentWindow.document;
     doc.open();
@@ -704,7 +575,7 @@ function printQR() {
             <div class="card ${borderClass}">
                 <div class="card-header">
                     <img src="${logoUrl}" alt="Logo">
-                    <div class="card-header-title">Barcode Absensi Jamaah<br>SMK Negeri 1 Sangasanga</div>
+                    <div class="card-header-title">Barcode Sistem Absensi Digital<br>YAYASAN NURUL HUDA KAPEDI</div>
                 </div>
                 <div class="card-qr">
                     <img src="${dataUrl}" alt="QR">
@@ -758,39 +629,21 @@ function initPrintQRModal() {
         });
     });
     
-    // Handle tingkat change
-    document.getElementById('filterTingkat').addEventListener('change', (e) => {
-        const tingkat = e.target.value;
-        const jurusanSelect = document.getElementById('filterJurusan');
-        jurusanSelect.innerHTML = '<option value="">Pilih Jurusan</option>';
-        
-        if (tingkat && JURUSAN_OPTIONS[tingkat]) {
-            JURUSAN_OPTIONS[tingkat].forEach(jurusan => {
-                const option = document.createElement('option');
-                option.value = jurusan;
-                option.textContent = jurusan;
-                jurusanSelect.appendChild(option);
-            });
-        }
-    });
-    
     // Handle cetak button
     document.getElementById('btnCetakQR').addEventListener('click', () => {
         const printType = document.querySelector('input[name="printType"]:checked').value;
-        const format = document.querySelector('input[name="format"]:checked').value;
         
         if (printType === 'filter') {
-            const tingkat = document.getElementById('filterTingkat').value;
-            const jurusan = document.getElementById('filterJurusan').value;
+            const filterKelas = document.getElementById('filterKelas').value;
             
-            if (!tingkat || !jurusan) {
-                showError('Pilih Tingkat dan Jurusan');
+            if (!filterKelas) {
+                showError('Masukkan kelas untuk difilter');
                 return;
             }
             
-            generateQRPrint(tingkat, jurusan, format);
+            generateQRPrint(filterKelas);
         } else {
-            generateQRPrint(null, null, format);
+            generateQRPrint(null);
         }
         
         // Close modal
@@ -801,68 +654,47 @@ function initPrintQRModal() {
 /**
  * Generate QR print page
  */
-function generateQRPrint(tingkat, jurusan, format) {
+function generateQRPrint(filterKelas) {
     showLoading('Membuat halaman cetak...');
     
     console.log('=== FILTER DEBUG ===');
-    console.log('User selected: Tingkat=' + tingkat + ', Jurusan=' + jurusan);
+    console.log('User selected: filterKelas=' + filterKelas);
     console.log('Total allStudents:', allStudents.length);
     
     // Filter students
     let studentsForPrint = allStudents;
     
-    if (tingkat && jurusan) {
-        const jurusanParts = jurusan.split(' ');
-        const filterSingkat = jurusanParts[0];
-        const filterAngka = jurusanParts[1] || '';
-        
-        console.log('Filter: Tingkat=' + tingkat + ', Singkat=' + filterSingkat + ', Angka=' + filterAngka);
+    if (filterKelas) {
+        const filterStr = filterKelas.toLowerCase().trim();
         
         studentsForPrint = allStudents.filter(s => {
-            if (!s.kelas) {
-                console.log(`✗ ${s.nama}: no kelas`);
-                return false;
+            if (!s.kelas) return false;
+            
+            const isRomanNumeral = /^(i{1,3}|iv|v|vi{1,3}|ix|x|xi{1,2}|xii)$/i.test(filterStr);
+            if (isRomanNumeral) {
+                const regex = new RegExp(`\\b${filterStr}\\b`, 'i');
+                return regex.test(s.kelas);
             }
-            
-            const parsed = parseKelasForFilter(s.kelas);
-            if (!parsed) {
-                console.log(`✗ ${s.nama}: could not parse "${s.kelas}"`);
-                return false;
-            }
-            
-            const tingkatMatch = parsed.tingkat === tingkat;
-            const singkatMatch = parsed.jurusanSingkat === filterSingkat;
-            
-            // If filter has angka (A, B, C), match with angka
-            // If filter has no angka (TKP, ATPH, ATP, H), match only singkat
-            const angkaMatch = filterAngka === '' ? true : (parsed.jurusanAngka === filterAngka);
-            
-            const matches = tingkatMatch && singkatMatch && angkaMatch;
-            
-            if (matches) {
-                console.log(`✓ ${s.nama}: "${s.kelas}" -> Tingkat=${parsed.tingkat}, Singkat=${parsed.jurusanSingkat}, Angka=${parsed.jurusanAngka}`);
-            }
-            
-            return matches;
+            return s.kelas.toLowerCase().includes(filterStr);
         });
         
-        console.log('Filtered count:', studentsForPrint.length);
+        console.log('Filtered students:', studentsForPrint.length);
     }
     
     if (studentsForPrint.length === 0) {
         Swal.close();
-        showError('Tidak ada data siswa untuk dicetak');
+        showError('Tidak ada siswa yang sesuai dengan filter');
         return;
     }
     
     // Generate QR codes
-    generateQRCodes(studentsForPrint, format, tingkat, jurusan);
+    generateQRCodes(studentsForPrint, filterKelas);
 }
 
 /**
  * Generate QR codes for printing
  */
-async function generateQRCodes(students, format, tingkat, jurusan) {
+async function generateQRCodes(students, tingkat, jurusan) {
     try {
         showLoading('Membuat QR Code...');
         
@@ -917,13 +749,12 @@ async function generateQRCodes(students, format, tingkat, jurusan) {
                 console.error(`  ✗ Canvas not found in tempDiv!`);
             }
             
-            const { tingkat: t, jurusan: j } = parseKelas(student.kelas);
+            const kelas = student.kelas || '-';
             
             const qrData = {
                 nama: student.nama,
                 nisn: student.nisn,
-                tingkat: t,
-                jurusan: j,
+                kelas: kelas,
                 qrImage: qrDataUrl
             };
             
@@ -1151,7 +982,7 @@ function generatePrintPage(qrCodes, tingkat, jurusan) {
 <body>`;
 
         const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-        const logoUrl = baseUrl + '/assets/img/logo-smk.png';
+        const logoUrl = baseUrl + '/assets/img/logo-yayasan.png';
 
         // Calculate items per page
         // A4 height: 297mm - 16mm margin = 281mm
@@ -1169,11 +1000,12 @@ function generatePrintPage(qrCodes, tingkat, jurusan) {
             html += '<div class="page">';
             
             // Add header on every page
+            const filterStr = tingkat ? `Filter: ${tingkat}` : 'Semua Siswa';
             html += `
                 <div class="header">
                     <h1>QR Code Siswa</h1>
-                    <p>Absensi Jama'ah SMK Negeri 1 Sangasanga</p>
-                    <p>Tingkat ${tingkat} - ${jurusan} (Halaman ${pageIdx + 1}/${totalPages})</p>
+                    <p>Sistem Absensi Digital YAYASAN NURUL HUDA KAPEDI</p>
+                    <p>${filterStr} (Halaman ${pageIdx + 1}/${totalPages})</p>
                 </div>
             `;
             
@@ -1192,10 +1024,10 @@ function generatePrintPage(qrCodes, tingkat, jurusan) {
                 
                 console.log(`  [${i}] Card: ${qr.nama} (NISN: ${qr.nisn})`);
                 
-                // Determine border color based on jurusan
+                // Determine border color based on kelas/jurusan
                 let borderClass = '';
                 let badgeClass = '';
-                const jurusanUpper = qr.jurusan.toUpperCase();
+                const jurusanUpper = (qr.jurusan || qr.kelas || '').toUpperCase();
                 
                 if (jurusanUpper.includes('TKR') || jurusanUpper.includes('TEKNIK KENDARAAN')) {
                     borderClass = 'border-tkr';
@@ -1215,7 +1047,7 @@ function generatePrintPage(qrCodes, tingkat, jurusan) {
                     <div class="card ${borderClass}">
                         <div class="card-header">
                             <img src="${logoUrl}" alt="Logo">
-                            <div class="card-header-title">Barcode Absensi Jamaah<br>SMK Negeri 1 Sangasanga</div>
+                            <div class="card-header-title">Barcode Sistem Absensi Digital<br>YAYASAN NURUL HUDA KAPEDI</div>
                         </div>
                         <div class="card-qr">
                             ${qrImg ? `<img src="${qrImg}" alt="QR">` : '<div style="color:#ccc;font-size:9px;">QR Error</div>'}
@@ -1223,7 +1055,7 @@ function generatePrintPage(qrCodes, tingkat, jurusan) {
                         <div class="card-text">
                             <h3>${qr.nama}</h3>
                             <p class="nisn">NISN: ${qr.nisn}</p>
-                            <p>${qr.tingkat} ${qr.jurusan}</p>
+                            <p>${qr.kelas}</p>
                         </div>
                     </div>
                 `;
@@ -1253,3 +1085,5 @@ function generatePrintPage(qrCodes, tingkat, jurusan) {
         showError('Gagal membuat halaman cetak: ' + error.message);
     }
 }
+
+

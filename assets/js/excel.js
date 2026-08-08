@@ -112,7 +112,7 @@ function processExcelData(data) {
     
     data.forEach((row, index) => {
         // Support both old and new format
-        // New format: NO, NAMA, NISN, TINGKATAN, JURUSAN
+        // New format: NO, NAMA, NISN, KELAS
         // Old format: NISN, Nama, Jenis Kelamin, Kelas, etc.
         
         const nisn = row.NISN || row['NISN'];
@@ -124,10 +124,15 @@ function processExcelData(data) {
             return;
         }
         
-        // Combine TINGKATAN + JURUSAN if they exist (new format)
+        // Get class info
         let kelas = '-';
-        if (row.TINGKATAN && row.JURUSAN) {
-            kelas = `${row.TINGKATAN} ${row.JURUSAN}`.trim();
+        if (row.KELAS) {
+            kelas = String(row.KELAS).trim();
+        } else if (row.TINGKATAN) {
+            kelas = String(row.TINGKATAN).trim();
+            if (row.JURUSAN) {
+                kelas = `${kelas} ${row.JURUSAN}`.trim();
+            }
         } else if (row.Kelas) {
             kelas = row.Kelas; // Old format
         }
@@ -309,35 +314,31 @@ function downloadTemplate() {
         // Create workbook
         const wb = XLSX.utils.book_new();
         
-        // Template data dengan format baru: NO | NAMA | NISN | TINGKATAN | JURUSAN
+        // Template data dengan format baru: NO | NAMA | NISN | KELAS
         const templateData = [
             {
                 'NO': 1,
                 'NAMA': 'Ahmad Desmon Firmanda',
                 'NISN': '253164',
-                'TINGKATAN': 'XI',
-                'JURUSAN': 'TITL A'
+                'KELAS': 'XI TITL A'
             },
             {
                 'NO': 2,
                 'NAMA': 'Ajni Sulian Muhammad',
                 'NISN': '253155',
-                'TINGKATAN': 'XI',
-                'JURUSAN': 'TITL A'
+                'KELAS': 'XI TITL A'
             },
             {
                 'NO': 3,
                 'NAMA': 'Adrian Akhinaya Asliono',
                 'NISN': '253178',
-                'TINGKATAN': 'XI',
-                'JURUSAN': 'TITL B'
+                'KELAS': 'XI TITL B'
             },
             {
                 'NO': 4,
                 'NAMA': 'Abdul Hafiz',
                 'NISN': '253203',
-                'TINGKATAN': 'XI',
-                'JURUSAN': 'TKR B'
+                'KELAS': 'XI TKR B'
             }
         ];
         
@@ -349,8 +350,7 @@ function downloadTemplate() {
             { wch: 5 },  // NO
             { wch: 30 }, // NAMA
             { wch: 12 }, // NISN
-            { wch: 12 }, // TINGKATAN
-            { wch: 20 }  // JURUSAN
+            { wch: 15 }  // KELAS
         ];
         
         // Add worksheet to workbook
@@ -364,9 +364,8 @@ function downloadTemplate() {
             { 'PETUNJUK PENGISIAN': '' },
             { 'PETUNJUK PENGISIAN': 'Kolom opsional:' },
             { 'PETUNJUK PENGISIAN': '- NO: Nomor urut (bisa dihitung otomatis)' },
-            { 'PETUNJUK PENGISIAN': '- TINGKATAN: X, XI, atau XII' },
-            { 'PETUNJUK PENGISIAN': '- JURUSAN: Nama jurusan/program keahlian' },
-            { 'PETUNJUK PENGISIAN': '  Contoh: TITL A, TKR B, TKP C, TKPI A, etc' },
+            { 'PETUNJUK PENGISIAN': '- KELAS: Kelas/Tingkatan dan Jurusan siswa' },
+            { 'PETUNJUK PENGISIAN': '  Contoh: X TKR A, XI TITL B, XII TKP C' },
             { 'PETUNJUK PENGISIAN': '' },
             { 'PETUNJUK PENGISIAN': 'TIPS:' },
             { 'PETUNJUK PENGISIAN': '- Hapus data contoh di sheet "Data Siswa"' },
@@ -401,3 +400,5 @@ document.addEventListener('DOMContentLoaded', () => {
         btnDownloadTemplate.addEventListener('click', downloadTemplate);
     }
 });
+
+

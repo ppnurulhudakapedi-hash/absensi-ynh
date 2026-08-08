@@ -43,12 +43,10 @@ async function loadTimeSettings() {
         } else {
             // Default settings
             timeSettings = {
-                subuhStart: '04:30',
-                subuhEnd: '05:30',
-                dhuhaStart: '06:30',
-                dhuhaEnd: '07:30',
-                zuhurStart: '11:30',
-                zuhurEnd: '12:30'
+                jamMasukStart: '06:00',
+                jamMasukEnd: '07:30',
+                jamPulangStart: '14:00',
+                jamPulangEnd: '16:00'
             };
         }
     } catch (error) {
@@ -57,93 +55,40 @@ async function loadTimeSettings() {
 }
 
 /**
- * Initialize scanner
+ * Initialize scanner (USB Barcode Scanner Version)
  */
 function initScanner() {
-    const btnStart = document.getElementById('btnStartScan');
-    const btnStop = document.getElementById('btnStopScan');
+    isScanning = true;
+    const scannerInput = document.getElementById('scannerInput');
     
-    btnStart.addEventListener('click', async () => {
-        try {
-            // Re-initialize with only QR Code support for faster processing
-            // (0 is QR_CODE in Html5QrcodeSupportedFormats)
-            html5QrCode = new Html5Qrcode("reader", { formatsToSupport: [ 0 ] });
-            
-            // Use facingMode: environment instead of manually picking camera ID.
-            // On modern iPhones (13, 14, 15), picking by ID often selects the telephoto 
-            // or ultrawide lens which cannot focus on close QR codes.
-            // Letting the OS pick "environment" selects the primary wide lens with auto-focus.
-            const cameraConfig = { facingMode: "environment" };
-            
-            // Optimized config for iOS and Android
-            const config = {
-                fps: 10, // 10-15 FPS is optimal. 30 FPS causes battery drain and frame dropping on older phones.
-                qrbox: function(viewfinderWidth, viewfinderHeight) {
-                    // Make scan box large enough to easily fit QR code
-                    let minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                    let qrboxSize = Math.floor(minEdge * 0.85); // 85% of smaller dimension
-                    return {
-                        width: qrboxSize,
-                        height: qrboxSize
-                    };
-                },
-                aspectRatio: 1.0,
-                disableFlip: false
-            };
-            
-            await html5QrCode.start(
-                cameraConfig,
-                config,
-                onScanSuccess,
-                onScanError
-            );
-            
-            isScanning = true;
-            btnStart.style.display = 'none';
-            btnStop.style.display = 'block';
-            
-            console.log('Scanner started successfully');
-            
-        } catch (error) {
-            console.error('Error starting scanner:', error);
-            
-            // Show detailed error for iOS users
-            let errorMsg = 'Gagal memulai scanner. ';
-            
-            if (error.name === 'NotAllowedError') {
-                errorMsg += 'Kamera diblokir. Buka Settings > Safari > Camera dan izinkan akses kamera.';
-            } else if (error.name === 'NotFoundError') {
-                errorMsg += 'Kamera tidak ditemukan.';
-            } else if (error.name === 'NotReadableError') {
-                errorMsg += 'Kamera sedang digunakan aplikasi lain.';
-            } else {
-                errorMsg += 'Pastikan kamera diizinkan dan coba lagi.';
+    if (scannerInput) {
+        // Fokuskan input secara otomatis agar siap menerima scan
+        scannerInput.focus();
+        
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'btnManualInput' && !e.target.closest('.swal2-container') && !e.target.closest('.sidebar')) {
+                scannerInput.focus();
             }
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal Memulai Scanner',
-                html: `<p>${errorMsg}</p><p style="font-size:12px;color:#666;margin-top:10px;">Error: ${error.message}</p>`,
-                confirmButtonColor: '#EF4444'
-            });
-        }
-    });
-    
-    btnStop.addEventListener('click', async () => {
-        if (html5QrCode) {
-            try {
-                await html5QrCode.stop();
-                html5QrCode.clear();
-                html5QrCode = null;
-            } catch (error) {
-                console.error('Error stopping scanner:', error);
+        });
+        
+        // Dengarkan event keydown untuk mendeteksi Enter dari scanner
+        scannerInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const scannedNisn = scannerInput.value.trim();
+                
+                if (scannedNisn !== '') {
+                    // Kosongkan input untuk scan berikutnya
+                    scannerInput.value = '';
+                    
+                    // Proses scan
+                    if (isScanning) {
+                        await onScanSuccess(scannedNisn);
+                    }
+                }
             }
-            
-            isScanning = false;
-            btnStart.style.display = 'block';
-            btnStop.style.display = 'none';
-        }
-    });
+        });
+    }
 }
 
 /**
@@ -157,13 +102,48 @@ async function onScanSuccess(decodedText) {
     
     try {
         const nisn = decodedText.trim();
-        const jenisAbsensi = document.getElementById('jenisAbsensi').value;
+        // Calculate time status
+        const now = new Date();
+        const currentTimeStr = formatTime(now); // e.g. "06:15"
+        
+        let jenisAbsensi = 'Harian';
+        let statusWaktu = 'Hadir';
+        
+        // Helper to convert time string to minutes
+        const timeToMins = (tStr) => {
+            if (!tStr) return 0;
+            const parts = tStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        };
+        
+        const currentMins = timeToMins(currentTimeStr);
+        const masukStart = timeToMins(timeSettings.jamMasukStart || '06:00');
+        const masukEnd = timeToMins(timeSettings.jamMasukEnd || '07:30');
+        const pulangStart = timeToMins(timeSettings.jamPulangStart || '14:00');
+        const pulangEnd = timeToMins(timeSettings.jamPulangEnd || '16:00');
+        
+        if (currentMins < pulangStart) {
+            jenisAbsensi = 'Masuk';
+            if (currentMins > masukEnd) {
+                statusWaktu = 'Terlambat';
+            } else {
+                statusWaktu = 'Tepat Waktu';
+            }
+        } else {
+            jenisAbsensi = 'Pulang';
+            if (currentMins > pulangEnd) {
+                statusWaktu = 'Terlambat';
+            } else {
+                statusWaktu = 'Tepat Waktu';
+            }
+        }
         
         // DEBUG: Log QR scan result
-        console.log('=== QR SCAN DEBUG ===');
-        console.log('Decoded QR Text:', decodedText);
+        console.log('=== BARCODE SCAN DEBUG ===');
+        console.log('Decoded Text:', decodedText);
         console.log('NISN (after trim):', nisn);
         console.log('Jenis Absensi:', jenisAbsensi);
+        console.log('Status Waktu:', statusWaktu);
         
         // Find student
         const studentSnapshot = await db.collection('students')
@@ -210,17 +190,14 @@ async function onScanSuccess(decodedText) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Absensi Sudah Tercatat',
-                text: `${studentData.nama} sudah melakukan absensi ${jenisAbsensi} hari ini`,
+                text: `${studentData.nama} sudah melakukan absensi hari ini`,
                 confirmButtonColor: '#F59E0B'
             });
             setTimeout(() => { isScanning = true; }, 2000);
             return;
         }
         
-        // Determine status based on time
-        const now = new Date();
-        const currentTime = formatTime(now);
-        const statusWaktu = determineTimeStatus(jenisAbsensi, currentTime);
+        const currentTime = currentTimeStr;
         
         // Save attendance
         const attendanceData = {
@@ -245,7 +222,7 @@ async function onScanSuccess(decodedText) {
                 <p><strong>${studentData.nama}</strong></p>
                 <p>NISN: ${nisn}</p>
                 <p>Kelas: ${studentData.kelas}</p>
-                <p>Status: <span style="color: ${statusWaktu === 'Tepat Waktu' ? '#10B981' : '#F59E0B'}">${statusWaktu}</span></p>
+                <p>Status: <span style="color: #10B981">${statusWaktu}</span></p>
             `,
             confirmButtonColor: '#7C3AED',
             timer: 2000
@@ -305,28 +282,10 @@ function initManualInput() {
 }
 
 /**
- * Determine time status
+ * Determine time status (Simplified for daily attendance)
  */
 function determineTimeStatus(jenisAbsensi, currentTime) {
-    if (!timeSettings) return 'Tepat Waktu';
-    
-    let endTime;
-    
-    if (jenisAbsensi === 'Sholat Subuh') {
-        endTime = timeSettings.subuhEnd;
-    } else if (jenisAbsensi === 'Sholat Dhuha') {
-        endTime = timeSettings.dhuhaEnd;
-    } else if (jenisAbsensi === 'Sholat Zuhur') {
-        endTime = timeSettings.zuhurEnd;
-    } else {
-        return 'Tepat Waktu';
-    }
-    
-    // Compare time
-    const currentMinutes = timeToMinutes(currentTime);
-    const endMinutes = timeToMinutes(endTime);
-    
-    return currentMinutes <= endMinutes ? 'Tepat Waktu' : 'Terlambat';
+    return 'Hadir';
 }
 
 /**
@@ -365,9 +324,9 @@ async function loadTodayHistory() {
             item.innerHTML = `
                 <div>
                     <h6 class="mb-1">${data.nama}</h6>
-                    <p class="text-muted mb-0">${data.jenisAbsensi} - ${data.jam}</p>
+                    <p class="text-muted mb-0">Absen Harian - ${data.jam}</p>
                 </div>
-                <span class="badge ${data.statusWaktu === 'Tepat Waktu' ? 'badge-success' : 'badge-warning'}">
+                <span class="badge badge-success">
                     ${data.statusWaktu}
                 </span>
             `;
@@ -378,3 +337,5 @@ async function loadTodayHistory() {
         console.error('Error loading history:', error);
     }
 }
+
+

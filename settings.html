@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Absensi Jama'ah SMK Negeri 1 Sangasanga</title>
+    <title>Settings - Sistem Absensi Digital YAYASAN NURUL HUDA KAPEDI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,10 +14,28 @@
 <body>
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="logo-container-sidebar">
-                <img src="assets/img/logo-smk.png" alt="Logo SMK N 1 Sangasanga" class="sidebar-logo">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-container-sidebar">
+                    <img src="assets/img/logo-yayasan.png" alt="Logo" class="sidebar-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-fallback" style="display: none;">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+                <div class="sidebar-title text-start text-white">
+                    <h5 class="mb-0 fw-bold fs-6">E-ABSENSI</h5>
+                    <small class="opacity-75" style="font-size: 10px;">YAYASAN NURUL HUDA</small>
+                </div>
             </div>
-            <h5>Absensi SMK Negeri 1 Sangasanga</h5>
+            
+            <div class="sidebar-user-card mt-4">
+                <div class="user-avatar" id="adminAvatar">
+                    <div class="avatar-text">A</div>
+                </div>
+                <div class="user-details text-start">
+                    <h6 class="mb-0 text-white fw-bold" id="adminName">Admin</h6>
+                    <small class="text-white opacity-75 fw-semibold" style="font-size: 10px;" id="adminRole">ADMIN</small>
+                </div>
+            </div>
         </div>
         <ul class="sidebar-menu">
             <li class="menu-item"><a href="dashboard.html"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
@@ -68,39 +86,27 @@
                         <div class="card-body">
                             <h5 class="card-title mb-4"><i class="bi bi-clock"></i> Pengaturan Waktu Absensi</h5>
                             <form id="timeSettingsForm">
-                                <h6 class="mb-3">Sholat Subuh</h6>
+                                <h6 class="mb-3">Absen Masuk</h6>
                                 <div class="row mb-3">
                                     <div class="col-6">
                                         <label class="form-label">Jam Mulai</label>
-                                        <input type="time" class="form-control" id="subuhStart" value="04:30">
+                                        <input type="time" class="form-control" id="jamMasukStart" value="06:00">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label">Jam Terakhir</label>
-                                        <input type="time" class="form-control" id="subuhEnd" value="05:30">
+                                        <label class="form-label">Jam Terakhir (Batas Terlambat)</label>
+                                        <input type="time" class="form-control" id="jamMasukEnd" value="07:30">
                                     </div>
                                 </div>
                                 
-                                <h6 class="mb-3">Sholat Dhuha</h6>
+                                <h6 class="mb-3">Absen Pulang</h6>
                                 <div class="row mb-3">
                                     <div class="col-6">
                                         <label class="form-label">Jam Mulai</label>
-                                        <input type="time" class="form-control" id="dhuhaStart" value="06:30">
+                                        <input type="time" class="form-control" id="jamPulangStart" value="14:00">
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Jam Terakhir</label>
-                                        <input type="time" class="form-control" id="dhuhaEnd" value="07:30">
-                                    </div>
-                                </div>
-                                
-                                <h6 class="mb-3">Sholat Zuhur</h6>
-                                <div class="row mb-3">
-                                    <div class="col-6">
-                                        <label class="form-label">Jam Mulai</label>
-                                        <input type="time" class="form-control" id="zuhurStart" value="11:30">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label">Jam Terakhir</label>
-                                        <input type="time" class="form-control" id="zuhurEnd" value="12:30">
+                                        <input type="time" class="form-control" id="jamPulangEnd" value="16:00">
                                     </div>
                                 </div>
                                 
@@ -125,3 +131,5 @@
     <script src="assets/js/setting.js"></script>
 </body>
 </html>
+
+
