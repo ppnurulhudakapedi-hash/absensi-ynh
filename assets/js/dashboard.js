@@ -65,6 +65,11 @@ async function loadStatistics() {
         const studentsSnapshot = await db.collection('students')
             .where('status', '==', 'Aktif')
             .get();
+        const activeStudentNisns = new Set();
+        studentsSnapshot.forEach(doc => {
+            activeStudentNisns.add(doc.data().nisn);
+        });
+
         const totalStudents = studentsSnapshot.size;
         document.getElementById('totalStudents').textContent = totalStudents;
         
@@ -81,16 +86,23 @@ async function loadStatistics() {
             const data = doc.data();
             const nisn = data.nisn;
             
-            let dailyStatus = 'Hadir';
-            if (data.statusKehadiran && data.statusKehadiran !== 'Belum Absen') {
-                dailyStatus = data.statusKehadiran;
-            } else if (data.jenisAbsensi === 'Manual' && data.statusWaktu !== 'Tepat Waktu' && data.statusWaktu !== 'Terlambat') {
-                 dailyStatus = data.statusKehadiran || 'Alpa';
+            // Hanya hitung siswa yang saat ini berstatus Aktif
+            if (!activeStudentNisns.has(nisn)) return;
+            
+            if (!studentStatusMap[nisn]) {
+                studentStatusMap[nisn] = 'Belum Absen';
             }
             
-            // If already present, don't overwrite with a lesser status unless it's a manual override
-            if (!studentStatusMap[nisn] || (studentStatusMap[nisn] === 'Hadir' && dailyStatus !== 'Hadir')) {
-                studentStatusMap[nisn] = dailyStatus;
+            // Jika ada scan Masuk atau Pulang, otomatis Hadir
+            if (data.jenisAbsensi === 'Masuk' || data.jenisAbsensi === 'Pulang' || data.jenisAbsensi === 'Absen Masuk' || data.jenisAbsensi === 'Absen Pulang') {
+                if (studentStatusMap[nisn] === 'Belum Absen') {
+                    studentStatusMap[nisn] = 'Hadir';
+                }
+            }
+            
+            // Jika ada status manual (Sakit, Izin, Alpa), timpa status Hadir
+            if (data.statusKehadiran && data.statusKehadiran !== 'Belum Absen' && data.statusKehadiran !== 'Hadir') {
+                studentStatusMap[nisn] = data.statusKehadiran;
             }
         });
         
