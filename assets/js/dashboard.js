@@ -93,14 +93,21 @@ async function loadStatistics() {
                 studentStatusMap[nisn] = 'Belum Absen';
             }
             
+            // Jika ada manual input (Alpa/Sakit/Izin/Hadir tanpa scan masuk/pulang)
+            if (!data.jenisAbsensi || data.jenisAbsensi === 'Manual') {
+                // Jangan timpa status yang sudah pasti (kecuali dari Belum Absen)
+                if (studentStatusMap[nisn] === 'Belum Absen') {
+                    studentStatusMap[nisn] = data.statusKehadiran || data.statusWaktu || 'Hadir';
+                }
+            } 
             // Jika ada scan Masuk atau Pulang, otomatis Hadir
-            if (data.jenisAbsensi === 'Masuk' || data.jenisAbsensi === 'Pulang' || data.jenisAbsensi === 'Absen Masuk' || data.jenisAbsensi === 'Absen Pulang') {
+            else if (data.jenisAbsensi === 'Masuk' || data.jenisAbsensi === 'Pulang' || data.jenisAbsensi === 'Absen Masuk' || data.jenisAbsensi === 'Absen Pulang') {
                 if (studentStatusMap[nisn] === 'Belum Absen') {
                     studentStatusMap[nisn] = 'Hadir';
                 }
             }
             
-            // Jika ada status manual (Sakit, Izin, Alpa), timpa status Hadir
+            // Override if document specifically sets a different status
             if (data.statusKehadiran && data.statusKehadiran !== 'Belum Absen' && data.statusKehadiran !== 'Hadir') {
                 studentStatusMap[nisn] = data.statusKehadiran;
             }
