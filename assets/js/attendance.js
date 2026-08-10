@@ -297,7 +297,65 @@ function applyFilters(event) {
 async function updateStatus(selectElement, nisn, nama, kelas, tanggal) {
     const newStatus = selectElement.value;
     
-    // Ubah class warna secara langsung sebelum async
+    // Cari status sebelumnya untuk revert jika dibatalkan
+    const studentData = allAttendance.find(s => s.nisn === nisn);
+    const prevStatus = studentData ? studentData.statusKehadiran : 'Belum Absen';
+    
+    let jam = '-';
+    let statusWaktu = '-';
+    let isManualHadir = false;
+    
+    // Jika Hadir, minta input jam
+    if (newStatus === 'Hadir') {
+        const { value: inputTime, isDismissed } = await Swal.fire({
+            title: 'Waktu Kehadiran',
+            text: 'Masukkan jam kehadiran siswa ini:',
+            input: 'time',
+            inputValue: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+            showCancelButton: true,
+            confirmButtonText: 'Simpan',
+            cancelButtonText: 'Batal'
+        });
+
+        if (isDismissed || !inputTime) {
+            // Revert select UI
+            selectElement.value = prevStatus;
+            return;
+        }
+
+        jam = inputTime;
+        isManualHadir = true;
+        
+        // Ambil pengaturan waktu untuk Tepat Waktu/Terlambat
+        try {
+            const timeDoc = await db.collection('settings').doc('time').get();
+            statusWaktu = 'Tepat Waktu'; // Default
+            
+            if (timeDoc.exists) {
+                const timeSettings = timeDoc.data();
+                const timeToMins = (tStr) => {
+                    if (!tStr) return 0;
+                    const parts = tStr.split(':');
+                    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                };
+                
+                const currentMins = timeToMins(jam);
+                const masukEnd = timeToMins(timeSettings.jamMasukEnd || '07:30');
+                const pulangStart = timeToMins(timeSettings.jamPulangStart || '14:00');
+                const pulangEnd = timeToMins(timeSettings.jamPulangEnd || '16:00');
+                
+                if (currentMins < pulangStart) {
+                    if (currentMins > masukEnd) statusWaktu = 'Terlambat';
+                } else {
+                    if (currentMins > pulangEnd) statusWaktu = 'Terlambat';
+                }
+            }
+        } catch (e) {
+            console.error("Gagal mengambil pengaturan waktu", e);
+        }
+    }
+    
+    // Ubah class warna secara langsung
     selectElement.className = 'select-status';
     if (newStatus === 'Hadir') selectElement.classList.add('status-hadir');
     else if (newStatus === 'Sakit') selectElement.classList.add('status-sakit');
@@ -319,9 +377,13 @@ async function updateStatus(selectElement, nisn, nama, kelas, tanggal) {
         
         existingDocs.forEach(doc => {
             docFound = true;
-            batch.update(doc.ref, {
-                statusKehadiran: newStatus
-            });
+            let updateData = { statusKehadiran: newStatus };
+            if (isManualHadir) {
+                updateData.jam = jam;
+                updateData.statusWaktu = statusWaktu;
+                updateData.jenisAbsensi = 'Manual'; // Atur sebagai manual agar bisa dibedakan
+            }
+            batch.update(doc.ref, updateData);
         });
         
         // Jika belum ada doc sama sekali (Alpa/Sakit tanpa scan)
@@ -332,9 +394,9 @@ async function updateStatus(selectElement, nisn, nama, kelas, tanggal) {
                 nama: nama,
                 kelas: kelas,
                 tanggal: tanggal,
-                jam: '-',
+                jam: jam,
                 jenisAbsensi: 'Manual',
-                statusWaktu: '-',
+                statusWaktu: statusWaktu,
                 statusKehadiran: newStatus,
                 operator: auth.currentUser ? auth.currentUser.uid : 'Admin',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -344,9 +406,13 @@ async function updateStatus(selectElement, nisn, nama, kelas, tanggal) {
         await batch.commit();
         
         // Update local data array so it doesn't revert on pagination
-        const studentIndex = allAttendance.findIndex(s => s.nisn === nisn);
-        if (studentIndex > -1) {
-            allAttendance[studentIndex].statusKehadiran = newStatus;
+        if (studentData) {
+            studentData.statusKehadiran = newStatus;
+            if (isManualHadir) {
+                studentData.jamDatang = jam;
+                studentData.statusWaktu = statusWaktu;
+            }
+            displayAttendance(); // Re-render table to show new time and badge
         }
         
     } catch (error) {
