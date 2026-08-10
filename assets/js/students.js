@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStudents();
     initSearchFilter();
     initAddButton();
+    initDeleteAllStudentsButton();
     initForm();
     initPrintQRButton();
     initPrintQRModal();
@@ -224,6 +225,75 @@ function initAddButton() {
         const modal = new bootstrap.Modal(document.getElementById('studentModal'));
         modal.show();
     });
+}
+
+/**
+ * Initialize delete all button
+ */
+function initDeleteAllStudentsButton() {
+    const btnDeleteAll = document.getElementById('btnDeleteAllStudents');
+    if (btnDeleteAll) {
+        btnDeleteAll.addEventListener('click', () => {
+            Swal.fire({
+                title: 'HAPUS SEMUA DATA?',
+                html: 'Tindakan ini akan <b>MENGHAPUS SELURUH DATA SISWA SECARA PERMANEN</b>.<br>Data tidak dapat dikembalikan!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Ya, Hapus Semua!',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        showLoading('Menghapus semua data siswa...');
+                        
+                        // Firebase Firestore Batched Delete
+                        const snapshot = await db.collection('students').get();
+                        
+                        if (snapshot.empty) {
+                            Swal.close();
+                            showSuccess('Tidak ada data siswa untuk dihapus.');
+                            return;
+                        }
+                        
+                        let batch = db.batch();
+                        let deletedCount = 0;
+                        let batchCount = 0;
+                        
+                        for (const doc of snapshot.docs) {
+                            batch.delete(doc.ref);
+                            deletedCount++;
+                            batchCount++;
+                            
+                            // Firestore limits batch size to 500
+                            if (batchCount === 450) {
+                                await batch.commit();
+                                batch = db.batch();
+                                batchCount = 0;
+                            }
+                        }
+                        
+                        if (batchCount > 0) {
+                            await batch.commit();
+                        }
+                        
+                        await loadStudents();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil Dihapus',
+                            text: `Sebanyak ${deletedCount} data siswa telah dihapus secara permanen.`,
+                            confirmButtonColor: '#7C3AED'
+                        });
+                        
+                    } catch (error) {
+                        console.error('Error deleting all students:', error);
+                        showError('Gagal menghapus data: ' + error.message);
+                    }
+                }
+            });
+        });
+    }
 }
 
 /**

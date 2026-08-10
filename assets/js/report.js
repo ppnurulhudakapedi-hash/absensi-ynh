@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setDefaultMonth();
     initFilterButton();
     initExportButtons();
+    initDeleteAllAttendanceButton();
 });
 
 /**
@@ -235,6 +236,78 @@ function initExportButtons() {
     document.getElementById('btnExportExcel').addEventListener('click', exportToExcel);
     document.getElementById('btnExportPDF').addEventListener('click', exportToPDF);
     document.getElementById('btnPrint').addEventListener('click', printReport);
+}
+
+/**
+ * Initialize Delete All Attendance button
+ */
+function initDeleteAllAttendanceButton() {
+    const btnDeleteAll = document.getElementById('btnDeleteAllAttendance');
+    if (btnDeleteAll) {
+        btnDeleteAll.addEventListener('click', () => {
+            Swal.fire({
+                title: 'HAPUS SEMUA DATA ABSENSI?',
+                html: 'Tindakan ini akan <b>MENGHAPUS SELURUH RIWAYAT ABSENSI SECARA PERMANEN</b>.<br>Data tidak dapat dikembalikan!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Ya, Hapus Semua!',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        showLoading('Menghapus semua data absensi...');
+                        
+                        // Firebase Firestore Batched Delete
+                        const snapshot = await db.collection('attendance').get();
+                        
+                        if (snapshot.empty) {
+                            Swal.close();
+                            showSuccess('Tidak ada data absensi untuk dihapus.');
+                            return;
+                        }
+                        
+                        let batch = db.batch();
+                        let deletedCount = 0;
+                        let batchCount = 0;
+                        
+                        for (const doc of snapshot.docs) {
+                            batch.delete(doc.ref);
+                            deletedCount++;
+                            batchCount++;
+                            
+                            // Firestore limits batch size to 500
+                            if (batchCount === 450) {
+                                await batch.commit();
+                                batch = db.batch();
+                                batchCount = 0;
+                            }
+                        }
+                        
+                        if (batchCount > 0) {
+                            await batch.commit();
+                        }
+                        
+                        // Clear the current report table
+                        reportData = [];
+                        displayReport();
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil Dihapus',
+                            text: `Sebanyak ${deletedCount} riwayat absensi telah dihapus secara permanen.`,
+                            confirmButtonColor: '#7C3AED'
+                        });
+                        
+                    } catch (error) {
+                        console.error('Error deleting all attendance:', error);
+                        showError('Gagal menghapus data: ' + error.message);
+                    }
+                }
+            });
+        });
+    }
 }
 
 /**
