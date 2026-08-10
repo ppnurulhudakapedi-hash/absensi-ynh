@@ -219,9 +219,6 @@ function initAddButton() {
         document.getElementById('studentForm').reset();
         document.getElementById('studentId').value = '';
         
-        // Clear jurusan dropdown
-        document.getElementById('jurusan').innerHTML = '<option value="">Pilih Jurusan...</option>';
-        
         const modal = new bootstrap.Modal(document.getElementById('studentModal'));
         modal.show();
     });
