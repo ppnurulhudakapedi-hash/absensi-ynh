@@ -4,12 +4,11 @@
  */
 
 // Check authentication
-checkAuth();
-
 let dailyChart, weeklyChart, monthlyChart;
 
 // Initialize dashboard on load
 document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     await loadDashboardData();
 });
 

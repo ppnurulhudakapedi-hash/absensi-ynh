@@ -3,12 +3,11 @@
  * Import data siswa dari file Excel
  */
 
-checkAuth();
-
 let excelData = [];
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     initUploadArea();
     initImportButton();
 });
@@ -394,7 +393,8 @@ function downloadTemplate() {
 }
 
 // Initialize download template button
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     const btnDownloadTemplate = document.getElementById('btnDownloadTemplate');
     if (btnDownloadTemplate) {
         btnDownloadTemplate.addEventListener('click', downloadTemplate);

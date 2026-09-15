@@ -3,8 +3,6 @@
  * Menampilkan data absensi dengan filter
  */
 
-checkAuth();
-
 let currentPage = 1;
 const itemsPerPage = 15;
 let allAttendance = [];
@@ -12,7 +10,8 @@ let filteredAttendance = [];
 
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     initFilters();
     initResetButton();
 });

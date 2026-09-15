@@ -8,10 +8,16 @@
  * Redirect to login if not authenticated
  */
 function checkAuth() {
-    firebase.auth().onAuthStateChanged((user) => {
-        if (!user) {
-            window.location.href = 'index.html';
-        }
+    return new Promise((resolve) => {
+        const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                resolve(user);
+            } else {
+                window.location.href = 'index.html';
+            }
+            // Do not unsubscribe because we might need it to detect logout, but wait, it's better to just let it handle redirect on logout anytime.
+            // But we only want to resolve once.
+        });
     });
 }
 

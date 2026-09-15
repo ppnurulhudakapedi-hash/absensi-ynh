@@ -3,13 +3,12 @@
  * Generate QR Code untuk setiap siswa
  */
 
-checkAuth();
-
 let selectedStudent = null;
 let qrCodeInstance = null;
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     loadStudentList();
     initSearchStudent();
     initDownloadButton();

@@ -3,8 +3,6 @@
  * Scan QR Code untuk absensi
  */
 
-checkAuth();
-
 let html5QrCode = null;
 let isScanning = false;
 let currentOperator = null;
@@ -12,6 +10,7 @@ let timeSettings = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     await loadOperatorInfo();
     await loadTimeSettings();
     await loadTodayHistory();

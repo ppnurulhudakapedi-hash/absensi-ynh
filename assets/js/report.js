@@ -3,10 +3,9 @@
  * Generate dan export laporan absensi
  */
 
-checkAuth();
-
 let reportData = [];// Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     setDefaultMonth();
     initFilterButton();
     initExportButtons();

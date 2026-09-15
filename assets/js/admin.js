@@ -3,10 +3,9 @@
  * CRUD untuk manajemen admin
  */
 
-checkAuth();
-
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     loadAdmins();
     initAddButton();
     initForm();

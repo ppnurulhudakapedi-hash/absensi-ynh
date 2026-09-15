@@ -3,8 +3,6 @@
  * CRUD operations untuk data siswa
  */
 
-checkAuth();
-
 let currentPage = 1;
 const itemsPerPage = 10;
 let allStudents = [];
@@ -14,7 +12,8 @@ let filteredStudents = [];
 // Kept empty to avoid breaking refs if any
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
     loadStudents();
     initSearchFilter();
     initAddButton();
